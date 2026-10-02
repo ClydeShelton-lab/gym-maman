@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gym">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Gym de Maman</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
 <style>
@@ -124,7 +128,7 @@ button:focus-visible{outline:.2rem solid var(--accent);outline-offset:.15rem}
 .ring circle{fill:none;stroke-width:5}
 .ring .r-bg{stroke:var(--surface-2)}
 .ring .r-fg{stroke:var(--c);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
-.time{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:calc(var(--d)*.3);line-height:1}
+.time{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:calc(var(--d)*.3);line-height:1}
 .time span{display:inline-block;width:.6em;text-align:center}
 .time .sep{width:.28em}
 .t-sub{font-size:1.15rem;color:var(--mut);min-height:1.5em}
@@ -155,7 +159,7 @@ button:focus-visible{outline:.2rem solid var(--accent);outline-offset:.15rem}
 .sch{display:flex;gap:.6rem;align-items:stretch;min-height:0}
 .sch.col{flex-direction:column}
 .pan{margin:0;position:relative;min-width:0;min-height:0;flex:1 1 0;background:var(--panel);border-radius:1rem;overflow:hidden}
-.pan svg{display:block;position:absolute;inset:0;width:100%;height:100%}
+.pan svg{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 .pan figcaption{position:absolute;top:.55rem;left:.75rem;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 .to{flex:none;align-self:center;width:1.1rem;height:1.1rem;border-top:.22rem solid var(--mut);border-right:.22rem solid var(--mut);transform:rotate(45deg);margin:0 .1rem 0 -.35rem;border-radius:.1rem}
 .sch.col .to{transform:rotate(135deg);margin:-.35rem 0 .1rem}
@@ -247,6 +251,7 @@ button:focus-visible{outline:.2rem solid var(--accent);outline-offset:.15rem}
 </main>
 
 <script>
+(function () {   // tout dans une fonction : aucun nom global, donc aucun conflit avec les id de la page (Safari)
 /* =====================================================================
    SCHÉMAS — bonshommes calculés à partir d'angles (0° = droite, 90° = bas)
    Une pose : hip [x,y], torso (angle ou [bas, haut]), head, armN/armF, legN/legF
@@ -779,18 +784,24 @@ function beep(freq, dur) {
     o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
   } catch (_) {}
 }
-document.addEventListener("pointerdown", () => {
-  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); } catch (_) {}
-}, true);
+const unlock = () => {
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state !== "running") ac.resume(); } catch (_) {}
+};
+["pointerdown", "touchend", "click"].forEach(t => document.addEventListener(t, unlock, true));
 
 /* --- Horloge + écran allumé pendant la séance (si le navigateur le permet) --- */
-const clock = () => { $("clock").textContent = new Date().toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" }); };
+const showClock = () => { $("clock").textContent = new Date().toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" }); };
 async function wake() { try { await navigator.wakeLock.request("screen"); } catch (_) {} }
 document.addEventListener("visibilitychange", () => { if (!document.hidden && $("home").hidden) wake(); });
 
-addEventListener("resize", () => { if (!$("work").hidden) FIG.render($("sch"), exos()[S.ex].schema); });   // rotation de l'écran
+let lastSize = "";
+addEventListener("resize", () => {                         // rotation de l'écran
+  const k = $("sch").clientWidth + "x" + $("sch").clientHeight;
+  if (!$("work").hidden && k !== lastSize) { lastSize = k; FIG.render($("sch"), exos()[S.ex].schema); }
+});
 
-renderHome(); clock(); setInterval(clock, 10000);
+renderHome(); showClock(); setInterval(showClock, 10000);
+})();
 </script>
 </body>
 </html>
