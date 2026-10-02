@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gym de Maman</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
+<style>
+/* Mise en page : appli plein écran. À gauche le schéma, à droite la consigne, en bas une seule grosse action.
+   Palette « eau et tapis » : chaque accessoire a sa couleur, la même sur les étiquettes et dans les schémas. */
+:root{
+  --bg:#EDF2EF; --surface:#FFFFFF; --surface-2:#DFE8E4; --line:#C5D3CE;
+  --ink:#12292A; --mut:#536767;
+  --accent:#0C7A6D; --on-accent:#FFFFFF; --accent-soft:#D3ECE6;
+  --effort:#C95A08; --ok:#23915A; --warn:#B3361B;
+  --bottle:#2478D4; --ball:#D43D74; --band:#7B4FD6; --mat:#8FD0C1; --prop:#8A9A99;
+  --fig-far:#A9B8B6; --panel:var(--surface);
+  --display:"Bricolage Grotesque","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1615; --surface:#18221F; --surface-2:#25322E; --line:#35463F;
+    --ink:#E9F1EE; --mut:#96A9A4;
+    --accent:#3FCDB6; --on-accent:#05241F; --accent-soft:#143A34;
+    --effort:#FF9A3D; --ok:#57D08D; --warn:#FF8A70;
+    --bottle:#62A8FF; --ball:#FF6FA3; --band:#B699FF; --mat:#2E6A5E; --prop:#71867F;
+    --fig-far:#5C706B; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1615; --surface:#18221F; --surface-2:#25322E; --line:#35463F;
+  --ink:#E9F1EE; --mut:#96A9A4;
+  --accent:#3FCDB6; --on-accent:#05241F; --accent-soft:#143A34;
+  --effort:#FF9A3D; --ok:#57D08D; --warn:#FF8A70;
+  --bottle:#62A8FF; --ball:#FF6FA3; --band:#B699FF; --mat:#2E6A5E; --prop:#71867F;
+  --fig-far:#5C706B; color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{height:100%;font-size:clamp(16px,.9vw + 1vh,24px);padding-block:env(safe-area-inset-top,0px) env(safe-area-inset-bottom,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.4;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;overflow:hidden}
+#app{height:100%;max-width:92rem;margin-inline:auto;padding-inline:clamp(16px,3vw,2.2rem);padding-block:clamp(12px,2.4vh,1.6rem)}
+.screen{height:100%;display:flex;flex-direction:column;gap:1rem;min-height:0}
+h1,h2,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit;color:inherit;border:0;border-radius:1rem;background:var(--surface);cursor:pointer;touch-action:manipulation;transition:transform .08s}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.35;cursor:default}
+button:focus-visible{outline:.2rem solid var(--accent);outline-offset:.15rem}
+@media (prefers-reduced-motion: reduce){button{transition:none}}
+.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.eyebrow::first-letter{text-transform:uppercase}
+
+/* étiquettes de matériel : même couleur que dans les schémas */
+.chips{display:flex;flex-wrap:wrap;gap:.3rem .9rem;font-size:.86rem;color:var(--mut)}
+.chips li{display:flex;align-items:center;gap:.4rem;white-space:nowrap}
+.chips i{width:.7rem;height:.7rem;border-radius:50%;flex:none}
+.d-bottle{background:var(--bottle)} .d-ball{background:var(--ball)} .d-band{background:var(--band)}
+.d-mat{background:var(--mat)} .d-prop{background:var(--prop)}
+
+/* ---------- Accueil ---------- */
+#home{overflow-y:auto;gap:.9rem}
+#home h1{font-family:var(--display);font-weight:800;font-size:clamp(1.8rem,4vw,2.4rem);line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+.sessions{display:grid;gap:.55rem}
+.sess{width:100%;text-align:left;padding:.75rem 1.25rem;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.5fr) auto;align-items:center;gap:.4rem 1.4rem;border:.14rem solid transparent}
+.sess.pick{border-color:var(--accent)}
+.s-title{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem .7rem}
+.s-name{font-family:var(--display);font-weight:700;font-size:1.5rem;line-height:1.1}
+.s-focus{display:block;color:var(--mut);font-size:.95rem}
+.s-side{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;white-space:nowrap}
+.s-dur{font-family:var(--display);font-weight:700;font-size:1.2rem}
+.s-last{font-size:.82rem;color:var(--mut)}
+.tag{font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--on-accent);background:var(--accent);padding:.2rem .6rem;border-radius:99rem}
+.advice{color:var(--mut);font-size:.92rem;max-width:68ch}
+
+/* ---------- Séance ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.ghost{background:transparent;border:.12rem solid var(--line);padding:.55rem 1rem;font-size:.9rem;font-weight:700;white-space:nowrap}
+.ghost.sure{border-color:var(--warn);color:var(--warn)}
+.where{text-align:center;min-width:0;font-size:.95rem;color:var(--mut)}
+.where b{color:var(--ink);font-family:var(--display);font-weight:700;margin-right:.5rem}
+.clock{font-family:var(--display);font-weight:700;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.prog{display:flex;gap:.3rem;margin-top:-.4rem}
+.prog i{flex:1;height:.3rem;border-radius:99rem;background:var(--surface-2)}
+.prog i.done{background:var(--ok)} .prog i.cur{background:var(--accent)}
+
+.stage{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(1rem,2.5vw,2rem)}
+.info{min-width:0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.7rem}
+.info>:first-child{margin-top:auto}
+.info>:last-child{margin-bottom:auto}
+.info h2{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,3.2vw,2.3rem);line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+.rc{display:flex;align-items:baseline;flex-wrap:wrap;gap:.3rem 1.6rem}
+.count{display:flex;align-items:center;gap:.7rem;font-weight:700;color:var(--accent)}
+.dots{display:flex;gap:.35rem}
+.dots i{width:.8rem;height:.8rem;border-radius:50%;background:var(--surface-2)}
+.dots i.done{background:var(--ok)} .dots i.cur{background:var(--accent)}
+.reps{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,5.4vw,3.2rem);line-height:.95;font-variant-numeric:tabular-nums}
+.reps small{font-family:var(--body);font-size:1.05rem;font-weight:400;color:var(--mut);margin-left:.35rem}
+.how{display:grid;gap:.4rem;font-size:1.05rem;line-height:1.35;max-width:46ch}
+.how li{padding-left:1.1rem;position:relative}
+.how li::before{content:"";position:absolute;left:0;top:.62em;width:.5rem;height:.14rem;border-radius:1px;background:var(--effort)}
+.bottle{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .8rem;font-size:.9rem;color:var(--mut)}
+.bottle b{color:var(--ink)}
+.seg{display:flex;gap:.3rem}
+.seg button{min-width:3.6rem;min-height:2.7rem;padding:0 .7rem;border-radius:.8rem;font-weight:700;border:.12rem solid transparent}
+.seg button[aria-pressed="true"]{background:var(--bottle);color:var(--surface)}
+.next{font-size:.9rem;color:var(--mut)}
+
+.bar{display:grid;grid-template-columns:1fr 2.3fr 1fr;gap:.7rem}
+.bar button{min-height:4.2rem;padding:.5rem;font-weight:700;font-size:1rem}
+.bar .main,.big{background:var(--accent);color:var(--on-accent);font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:.01em}
+
+/* ---------- Minuteur ---------- */
+#timer{align-items:center;justify-content:space-between;text-align:center;--c:var(--accent)}
+#timer[data-mode="work"]{--c:var(--effort)}
+#timer[data-mode="prep"]{--c:var(--mut)}
+.t-head{width:100%;display:flex;justify-content:flex-start}
+.t-lbl{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);line-height:1.05;color:var(--c);text-wrap:balance}
+.ring{--d:min(50vh,74vw);position:relative;width:var(--d);height:var(--d);flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.ring circle{fill:none;stroke-width:5}
+.ring .r-bg{stroke:var(--surface-2)}
+.ring .r-fg{stroke:var(--c);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.time{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:calc(var(--d)*.3);line-height:1}
+.time span{display:inline-block;width:.6em;text-align:center}
+.time .sep{width:.28em}
+.t-sub{font-size:1.15rem;color:var(--mut);min-height:1.5em}
+.t-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;width:min(100%,34rem)}
+.t-bar button{min-height:3.8rem;font-weight:700;font-size:1.05rem}
+
+/* ---------- Fin ---------- */
+#done{align-items:center;justify-content:center;text-align:center;gap:1.2rem}
+#done h1{font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,6vw,3.4rem);line-height:1}
+#done p{font-size:1.2rem;color:var(--mut);max-width:30ch}
+.check{width:6rem;height:6rem}
+.check circle{fill:var(--ok)} .check path{fill:none;stroke:var(--surface);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.big{min-height:4.2rem;padding:.5rem 2.2rem}
+
+/* ---------- Écran étroit ou vertical : tout s'empile ---------- */
+@media (max-width:760px),(orientation:portrait){
+  .sess{grid-template-columns:minmax(0,1fr) auto}
+  .sess .chips{grid-column:1/-1;grid-row:2}
+  .stage{display:flex;flex-direction:column;overflow-y:auto;gap:1rem}
+  .sch{flex:none;height:clamp(210px,36vh,460px)}
+  .info{overflow:visible;flex:none}
+  .info>:first-child{margin-top:0}
+  .where b{display:block;margin:0}
+  .bar .main{font-size:1.2rem}
+}
+
+/* schémas */
+.sch{display:flex;gap:.6rem;align-items:stretch;min-height:0}
+.sch.col{flex-direction:column}
+.pan{margin:0;position:relative;min-width:0;min-height:0;flex:1 1 0;background:var(--panel);border-radius:1rem;overflow:hidden}
+.pan svg{display:block;position:absolute;inset:0;width:100%;height:100%}
+.pan figcaption{position:absolute;top:.55rem;left:.75rem;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.to{flex:none;align-self:center;width:1.1rem;height:1.1rem;border-top:.22rem solid var(--mut);border-right:.22rem solid var(--mut);transform:rotate(45deg);margin:0 .1rem 0 -.35rem;border-radius:.1rem}
+.sch.col .to{transform:rotate(135deg);margin:-.35rem 0 .1rem}
+.fig,.far,.halo,.mv,.bd,.pr,.gd,.gr{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.fig{stroke:var(--ink);stroke-width:4.6}
+.far{stroke:var(--fig-far);stroke-width:4.6}
+.halo{stroke:var(--panel);stroke-width:8}
+.hd{fill:var(--ink);stroke:var(--panel);stroke-width:1.6}
+.gr{stroke:var(--line);stroke-width:1.2}
+.mv{stroke:var(--effort);stroke-width:2.4}
+.mvh{fill:var(--effort);stroke:none}
+.gd{stroke:var(--effort);stroke-width:1.6;stroke-dasharray:1 4.5}
+.bt{fill:var(--bottle);stroke:var(--panel);stroke-width:1.2}
+.bl{fill:var(--ball);stroke:var(--panel);stroke-width:1.2}
+.bd{stroke:var(--band);stroke-width:2.8}
+.mt{fill:var(--mat);stroke:none}
+.wl{fill:var(--surface-2);stroke:none}
+.pr{stroke:var(--prop);stroke-width:2.6}
+.pr-b{stroke-width:4.4}
+.prf{fill:var(--prop);stroke:none}
+</style>
+
+<main id="app">
+
+<!-- ACCUEIL -->
+<section id="home" class="screen">
+  <header>
+    <p class="eyebrow" id="today"></p>
+    <h1>Quelle séance aujourd'hui ?</h1>
+  </header>
+  <ul class="sessions" id="sessions"></ul>
+  <p class="advice">Trois ou quatre séances par semaine suffisent, avec un jour de repos entre deux. Les exercices raffermissent les bras, les cuisses et le ventre. Le vélo aide à perdre du ventre. Si une articulation fait mal, arrête l'exercice et passe au suivant.</p>
+</section>
+
+<!-- SÉANCE -->
+<section id="work" class="screen" hidden>
+  <div class="top">
+    <button class="ghost" id="quit">Arrêter</button>
+    <p class="where"><b id="wSess"></b><span id="wIdx"></span></p>
+    <span class="clock" id="clock"></span>
+  </div>
+  <div class="prog" id="prog"></div>
+  <div class="stage">
+    <div class="sch" id="sch"></div>
+    <div class="info">
+      <p class="eyebrow" id="wZone"></p>
+      <h2 id="wName"></h2>
+      <ul class="chips" id="wMat"></ul>
+      <div class="rc">
+        <p class="reps" id="wReps"></p>
+        <div class="count"><span id="wSet"></span><span class="dots" id="wDots"></span></div>
+      </div>
+      <ul class="how" id="wHow"></ul>
+      <div class="bottle" id="wBottle" hidden>
+        <b>Bouteille</b><div class="seg" id="wSeg"></div><span id="wBtCap"></span>
+      </div>
+      <p class="next" id="wNext"></p>
+    </div>
+  </div>
+  <div class="bar">
+    <button id="prevEx">Précédent</button>
+    <button class="main" id="go"></button>
+    <button id="nextEx">Suivant</button>
+  </div>
+</section>
+
+<!-- MINUTEUR -->
+<section id="timer" class="screen" hidden data-mode="rest">
+  <div class="t-head"><button class="ghost" id="tBack">Revenir à l'exercice</button></div>
+  <p class="t-lbl" id="tLbl"></p>
+  <div class="ring">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="r-bg" cx="50" cy="50" r="45"/><circle class="r-fg" id="ringFg" cx="50" cy="50" r="45"/></svg>
+    <div class="time" id="tTime" role="timer"></div>
+  </div>
+  <p class="t-sub" id="tSub"></p>
+  <div class="t-bar">
+    <button id="tPause">Pause</button><button id="tPlus">+15 s</button><button id="tSkip">Passer</button>
+  </div>
+</section>
+
+<!-- FIN -->
+<section id="done" class="screen" hidden>
+  <svg class="check" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32"/><path d="M18 33l10 10 18-21"/></svg>
+  <h1>Séance terminée</h1>
+  <p id="doneMsg"></p>
+  <button class="big" id="doneBtn">Retour aux séances</button>
+</section>
+
+</main>
+
+<script>
+/* =====================================================================
+   SCHÉMAS — bonshommes calculés à partir d'angles (0° = droite, 90° = bas)
+   Une pose : hip [x,y], torso (angle ou [bas, haut]), head, armN/armF, legN/legF
+   Un membre : {a:[angle1, angle2]} ou {to:[x,y], b:±1} (atteint un point, b = sens du pli)
+   ===================================================================== */
+const FIG = (() => {
+  const L = { torso: 30, neck: 3, head: 7, ua: 16, fa: 15, th: 21, sh: 21, foot: 7 };
+  const R = d => d * Math.PI / 180;
+  const pt = (p, a, l) => [p[0] + Math.cos(R(a)) * l, p[1] + Math.sin(R(a)) * l];
+  const f = n => Math.round(n * 10) / 10;
+  const P = (...pts) => "M" + pts.map(p => f(p[0]) + " " + f(p[1])).join("L");
+  const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+
+  function ik(root, to, l1, l2, b) {
+    const dx = to[0] - root[0], dy = to[1] - root[1];
+    const d = Math.min(l1 + l2 - .01, Math.max(Math.abs(l1 - l2) + .01, Math.hypot(dx, dy)));
+    const base = Math.atan2(dy, dx);
+    const al = Math.acos((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d));
+    return [[root[0] + Math.cos(base + b * al) * l1, root[1] + Math.sin(base + b * al) * l1],
+            [root[0] + Math.cos(base) * d, root[1] + Math.sin(base) * d]];
+  }
+  function limb(root, s, l1, l2) {
+    if (!s) return null;
+    if (s.to) return ik(root, s.to, l1, l2, s.b || 1);
+    const j = pt(root, s.a[0], l1);
+    return [j, pt(j, s.a[1], l2)];
+  }
+
+  function joints(p) {
+    const sp = Array.isArray(p.torso) ? p.torso : [p.torso, p.torso];
+    const hip = p.hip, mid = pt(hip, sp[0], L.torso / 2), sh = pt(mid, sp[1], L.torso / 2);
+    const head = pt(sh, p.head == null ? sp[1] : p.head, L.neck + L.head);
+    const sw = p.sw || 0, hw = p.hw || 0;
+    const sN = [sh[0] + sw, sh[1]], sF = [sh[0] - sw, sh[1]], hpN = [hip[0] + hw, hip[1]], hpF = [hip[0] - hw, hip[1]];
+    const aN = limb(sN, p.armN, L.ua, L.fa), aF = limb(sF, p.armF === undefined ? p.armN : p.armF, L.ua, L.fa);
+    const lN = limb(hpN, p.legN, L.th, L.sh), lF = limb(hpF, p.legF === undefined ? p.legN : p.legF, L.th, L.sh);
+    return { hip, mid, sh, head, sN, sF, hpN, hpF,
+      eN: aN && aN[0], hN: aN && aN[1], eF: aF && aF[0], hF: aF && aF[1],
+      kN: lN && lN[0], aN: lN && lN[1], kF: lF && lF[0], aF: lF && lF[1] };
+  }
+
+  function body(p, j) {
+    const all = p.front || p.flat;                       // vue de face : pas de membre « au fond »
+    const seg = (cls, ...pts) => (cls === "fig" ? `<path d="${P(...pts)}" class="halo"/>` : "") + `<path d="${P(...pts)}" class="${cls}"/>`;
+    const foot = (s, a, dflt) => {
+      const fa = s && s.f !== undefined ? s.f : dflt;
+      return fa == null ? [] : [pt(a, fa, L.foot)];
+    };
+    const legFs = p.legF === undefined ? p.legN : p.legF, armFs = p.armF === undefined ? p.armN : p.armF;
+    let o = "";
+    if (j.kF) o += seg(all ? "fig" : "far", j.hpF, j.kF, j.aF, ...foot(legFs, j.aF, p.front ? 180 : 0));
+    if (j.eF) o += seg(all ? "fig" : "far", j.sF, j.eF, j.hF);
+    const headSvg = `<circle cx="${f(j.head[0])}" cy="${f(j.head[1])}" r="${L.head}" class="hd"/>`;
+    o += `<path d="${P(j.hip, j.mid, j.sh)}" class="fig"/>`;
+    if (p.sw) o += `<path d="${P(j.sF, j.sN)}" class="fig"/>`;
+    if (p.hw) o += `<path d="${P(j.hpF, j.hpN)}" class="fig"/>`;
+    if (!p.headOver) o += headSvg;
+    if (j.kN) o += seg("fig", j.hpN, j.kN, j.aN, ...foot(p.legN, j.aN, 0));
+    if (j.eN) o += seg("fig", j.sN, j.eN, j.hN);
+    if (p.headOver) o += headSvg;
+    return o;
+  }
+
+  /* ---- accessoires ---- */
+  const bottle = (p, rot = 0) => `<g transform="translate(${f(p[0])} ${f(p[1])}) rotate(${rot})"><rect x="-3.4" y="-6.5" width="6.8" height="13" rx="2.6" class="bt"/><rect x="-1.8" y="-10" width="3.6" height="4.5" rx="1.2" class="bt"/></g>`;
+  const ball = (c, r) => `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${r}" class="bl"/>`;
+  const band = (...pts) => `<path d="${P(...pts)}" class="bd"/>`;
+  const wall = x => `<rect x="${x}" y="-8" width="7" height="114.5" class="wl"/>`;
+  const mat = (x1, x2) => `<rect x="${x1}" y="102" width="${x2 - x1}" height="4.5" rx="2.2" class="mt"/>`;
+  const chair = x => `<path d="M${x} 86H${x + 24}M${x + 2} 86V106M${x + 22} 86V106M${x} 86L${x - 2} 54" class="pr"/>`;
+  const guide = (a, b) => `<path d="${P(a, b)}" class="gd"/>`;
+  function arrow(a, b, bow = 0, two = false) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], n = Math.hypot(dx, dy) || 1;
+    const c = [(a[0] + b[0]) / 2 - dy / n * bow, (a[1] + b[1]) / 2 + dx / n * bow];
+    const tip = (t, from) => {
+      const an = Math.atan2(t[1] - from[1], t[0] - from[0]), s = 5.5;
+      const q = k => [t[0] - Math.cos(an + k) * s, t[1] - Math.sin(an + k) * s];
+      const e = [t[0] + Math.cos(an) * 1.5, t[1] + Math.sin(an) * 1.5];
+      return `<path d="${P(e, q(.5), q(-.5))}Z" class="mvh"/>`;
+    };
+    return `<path d="M${f(a[0])} ${f(a[1])}Q${f(c[0])} ${f(c[1])} ${f(b[0])} ${f(b[1])}" class="mv"/>` + tip(b, c) + (two ? tip(a, c) : "");
+  }
+  const bike = () => `<path d="M40 105H56M82 105H100M48 105L60 84L92 105M60 84L50 60M80 66L85 41M60 84L80 66" class="pr"/><path d="M42 58H57M79 40H91" class="pr pr-b"/><circle cx="80" cy="89" r="12" class="pr"/><path d="M55 79L65 89" class="pr"/><circle cx="60" cy="84" r="3" class="prf"/>`;
+
+  /* ---- poses ---- */
+  const G = 104;                                           // hauteur des chevilles, debout
+  const stand = (x, y = 62.2, fx = x + 1) => ({ hip: [x, y], torso: -90, legN: { to: [fx, G], b: -1 } });
+  const face = (x, y = 62.2) => ({ hip: [x, y], torso: -90, sw: 9, hw: 5, front: true,
+    legN: { a: [86, 88] }, legF: { a: [94, 92] } });
+  const dos = { torso: 180, head: 205 };                   // allongée sur le dos, tête à gauche
+  const pieds = { to: [84, 100], b: -1 };                  // genoux pliés, pieds à plat
+
+  const S = {
+    velo: [{ t: "Sur le vélo",
+      p: { hip: [49, 55], torso: -62, head: -70, armN: { to: [85, 41], b: 1 }, legN: { to: [65, 89], b: -1 }, legF: { to: [55, 79], b: -1 } },
+      u: () => bike(), o: () => arrow([47, 82], [60, 71], -7) }],
+
+    triceps: [
+      { t: "Départ", p: { ...stand(62), head: -80, armN: { a: [-105, 110] } },
+        o: j => bottle(j.hN) + arrow([44, 26], [46, 2], -5) },
+      { t: "Arrivée", p: { ...stand(62), head: -80, armN: { a: [-97, -93] } }, o: j => bottle(j.hN) }],
+
+    kickback: [
+      { t: "Départ", p: { hip: [50, 66], torso: -25, head: -12, legN: { to: [54, G], b: -1 }, armN: { a: [168, 92] } },
+        o: j => bottle(j.hN) + arrow([45, 84], [35, 63], 5) },
+      { t: "Arrivée", p: { hip: [50, 66], torso: -25, head: -12, legN: { to: [54, G], b: -1 }, armN: { a: [168, 172] } },
+        o: j => bottle(j.hN, 90) }],
+
+    curl: [
+      { t: "Départ", p: { ...stand(56), armN: { a: [90, 84] } }, o: j => bottle(j.hN) + arrow([70, 62], [74, 40], 6) },
+      { t: "Arrivée", p: { ...stand(56), armN: { a: [92, -58] } }, o: j => bottle(j.hN) }],
+
+    rowing: [
+      { t: "Départ", p: { hip: [36, 99], torso: -90, legN: { to: [78, 97], b: -1, f: -80 }, armN: { a: [25, 18] } },
+        u: () => mat(18, 98), o: j => band(j.hN, [79, 92]) + arrow([62, 68], [44, 68]) },
+      { t: "Arrivée", p: { hip: [36, 99], torso: -90, legN: { to: [78, 97], b: -1, f: -80 }, armN: { a: [125, -5] } },
+        u: () => mat(18, 98), o: j => band(j.hN, [79, 92]) }],
+
+    laterales: [
+      { t: "Départ", p: { ...face(60), armN: { a: [84, 88] }, armF: { a: [96, 92] } },
+        o: j => bottle(j.hN) + bottle(j.hF) + arrow([82, 60], [98, 44], -5) + arrow([38, 60], [22, 44], 5) },
+      { t: "Arrivée", p: { ...face(60), armN: { a: [8, 2] }, armF: { a: [172, 178] } }, o: j => bottle(j.hN) + bottle(j.hF) }],
+
+    pompes: [
+      { t: "Départ", p: { hip: [52.7, 62.9], torso: -78, legN: { a: [102, 102] }, armN: { to: [88, 37], b: 1 } },
+        u: () => wall(88), o: () => arrow([56, 12], [74, 14], 0) },
+      { t: "Arrivée", p: { hip: [59.7, 65.1], torso: -68, legN: { a: [112, 112] }, armN: { to: [88, 39], b: 1 } }, u: () => wall(88) }],
+
+    squatBalle: [
+      { t: "Départ", p: { hip: [44, 66], torso: -90, legN: { to: [60, G], b: -1 }, armN: { a: [80, 85] } },
+        u: () => wall(13) + ball([30.9, 54], 10.8), o: () => arrow([78, 50], [78, 74]) },
+      { t: "Arrivée", p: { hip: [44, 84], torso: -90, legN: { to: [60, G], b: -1 }, armN: { a: [5, 0] } },
+        u: () => wall(13) + ball([30.9, 64], 10.8) }],
+
+    pont: [
+      { t: "Départ", p: { hip: [54, 99], ...dos, legN: { to: [78, 100], b: -1 }, armN: { a: [5, 2] } },
+        u: () => mat(6, 100), o: j => ball(j.kN, 5) + arrow([46, 92], [46, 74]) },
+      { t: "Arrivée", p: { hip: [51, 86], torso: 154.3, head: 205, legN: { to: [78, 100], b: -1 }, armN: { a: [3, 1] } },
+        u: () => mat(6, 100), o: j => ball(j.kN, 5) }],
+
+    pasLateraux: [
+      { t: "Départ", p: { hip: [52, 64], torso: -90, sw: 9, hw: 6, front: true, legN: { to: [60, G], b: -1 }, legF: { to: [44, G], b: 1 }, armN: { a: [60, 125] }, armF: { a: [120, 55] } },
+        o: j => band(mix(j.hpF, j.kF, .8), mix(j.hpN, j.kN, .8)) + arrow([72, 96], [92, 96]) },
+      { t: "Arrivée", p: { hip: [58, 66], torso: -90, sw: 9, hw: 6, front: true, legN: { to: [80, G], b: -1 }, legF: { to: [46, G], b: 1 }, armN: { a: [60, 125] }, armF: { a: [120, 55] } },
+        o: j => band(mix(j.hpF, j.kF, .8), mix(j.hpN, j.kN, .8)) }],
+
+    jambeCote: [
+      { t: "Départ", p: { hip: [68, 99], torso: 182, head: 200, flat: true, legF: { a: [0, 0], f: -90 }, legN: { a: [-5, -5], f: -95 }, armF: { a: [182, 182] }, armN: { a: [-15, 22] } },
+        u: () => mat(2, 116), o: () => arrow([106, 86], [98, 68], -5) },
+      { t: "Arrivée", p: { hip: [68, 99], torso: 182, head: 200, flat: true, legF: { a: [0, 0], f: -90 }, legN: { a: [-35, -35], f: -125 }, armF: { a: [182, 182] }, armN: { a: [-15, 22] } },
+        u: () => mat(2, 116) }],
+
+    chaise: [{ t: "Position à tenir", p: { hip: [25, 83], torso: -90, legN: { a: [0, 90] }, armN: { a: [80, 48] } },
+      u: () => wall(13), o: j => `<path d="M40 83v6h6" class="mv"/>` + ball(j.kN, 5) }],
+
+    crunch: [
+      { t: "Départ", p: { hip: [58, 99], ...dos, legN: pieds, armN: { a: [-90, -90] } },
+        u: () => mat(6, 104), o: j => ball(pt(j.hN, -90, 8), 9) + arrow([42, 60], [58, 66], -5) },
+      { t: "Arrivée", p: { hip: [58, 99], torso: [180, 210], head: 218, legN: pieds, armN: { a: [-40, -40] } },
+        u: () => mat(6, 104), o: j => ball(pt(j.hN, -40, 8), 9) }],
+
+    deadBug: [
+      { t: "Départ", p: { hip: [68, 99], ...dos, armN: { a: [-90, -90] }, legN: { a: [-90, 0], f: -90 } },
+        u: () => mat(6, 116), o: () => arrow([30, 68], [14, 78], 5) + arrow([94, 70], [108, 82], -5) },
+      { t: "Arrivée", p: { hip: [68, 99], ...dos, armN: { a: [212, 204] }, armF: { a: [-90, -90] }, legN: { a: [-90, 0], f: -90 }, legF: { a: [-14, -10], f: -100 } },
+        u: () => mat(6, 116) }],
+
+    genoux: [
+      { t: "Départ", p: { hip: [56, 99], ...dos, armN: { a: [5, 2] }, legN: { a: [-90, 0], f: -90 } },
+        u: () => mat(6, 100), o: j => ball(j.kN, 5) + arrow([70, 64], [50, 64]) },
+      { t: "Arrivée", p: { hip: [55, 96], torso: [170, 182], head: 205, armN: { a: [6, 3] }, legN: { a: [-135, -20], f: -110 } },
+        u: () => mat(6, 100), o: j => ball(j.kN, 5) }],
+
+    rotation: [
+      { t: "Au centre", p: { hip: [44, 99], torso: -110, head: -100, legN: { to: [80, 100], b: -1 }, armN: { to: [58, 80], b: 1 } },
+        u: () => mat(24, 100), o: j => ball(pt(j.hN, 0, 6), 8) + arrow([66, 62], [48, 58], 6, true) },
+      { t: "Sur le côté", p: { hip: [44, 99], torso: -110, head: -100, legN: { to: [80, 100], b: -1 }, armF: null, armN: { to: [47, 89], b: 1 } },
+        u: () => mat(24, 100), o: j => ball(pt(j.hN, 40, 5), 8) }],
+
+    planche: [{ t: "Position à tenir", p: { hip: [50, 93], torso: -18, head: -10, legN: { a: [162, 196], f: 240 }, armN: { a: [90, 0] } },
+      u: () => mat(4, 104), o: () => guide([31, 89], [86, 71]) }],
+
+    plancheCote: [{ t: "Position à tenir", p: { hip: [63, 93], torso: 198, head: 195, flat: true, legN: { a: [18, 0], f: null }, legF: null, armF: { a: [90, 180] }, armN: { a: [-10, 45] } },
+      u: () => mat(4, 112), o: () => guide([37, 74], [84, 89]) }],
+
+    squatChaise: [
+      { t: "Départ", p: { ...stand(54, 63, 58), armN: { a: [88, 86] } },
+        u: () => chair(16), o: j => bottle(j.hN) + arrow([42, 58], [33, 74], 5) },
+      { t: "Arrivée", p: { hip: [38, 80], torso: -68, head: -72, legN: { to: [58, G], b: -1 }, armN: { a: [85, 80] } },
+        u: () => chair(16), o: j => bottle(j.hN) }],
+
+    /* ---- étirements : une image par position ---- */
+    eTriceps: { t: "Arrière du bras", p: { ...face(60), headOver: true, armN: { a: [-82, 150] }, armF: { to: [71, 19], b: -1 } } },
+    eEnfant: { t: "Dos et épaules", p: { hip: [41, 91], torso: [-25, 25], head: 15, headOver: true, legN: { to: [39, 100], b: -1, f: 180 }, armN: { to: [99, 99.5], b: -1 } }, u: () => mat(22, 108) },
+    eCobra: { t: "Ventre", p: { hip: [54, 99], torso: [-18, -52], head: -75, legN: { a: [180, 180], f: 180 }, armN: { to: [86, 99.5], b: 1 } }, u: () => mat(2, 100) },
+    ePince: { t: "Arrière des cuisses", p: { hip: [40, 99], torso: [-70, -40], head: -20, legN: { a: [0, 0], f: -85 }, armN: { to: [78, 90], b: 1 } }, u: () => mat(22, 100) },
+    eQuad: { t: "Avant de la cuisse", p: { hip: [54, 62.2], torso: -92, flat: true, legF: { to: [55, G], b: -1 }, legN: { a: [112, 252], f: 200 }, armN: { to: [41, 60], b: 1 }, armF: { to: [71, 55], b: 1 } }, u: () => chair(72) },
+  };
+
+  function panel(d) {
+    const j = joints(d.p);
+    return `<figure class="pan"><svg viewBox="0 -12 120 124" role="img" aria-label="${d.t}"><path d="M3 106.5H117" class="gr"/><g class="ct">`
+      + (d.u ? d.u(j) : "") + body(d.p, j) + (d.o ? d.o(j) : "") + `</g></svg><figcaption>${d.t}</figcaption></figure>`;
+  }
+  /* keys : "curl" (départ + arrivée) ou ["eTriceps", "eEnfant"] (positions indépendantes) */
+  function render(box, keys) {
+    const list = Array.isArray(keys) ? keys.map(k => S[k]) : S[keys] || [];
+    const seq = !Array.isArray(keys);
+    box.innerHTML = list.map(panel).join(seq && list.length === 2 ? `<span class="to" aria-hidden="true"></span>` : "");
+    // cadre serré, commun au départ et à l'arrivée pour garder la même échelle
+    const svgs = [...box.querySelectorAll("svg")], groups = seq ? [svgs] : svgs.map(s => [s]);
+    const dims = [];
+    groups.forEach(g => {
+      let x1 = 1e9, y1 = 1e9, x2 = -1e9;
+      g.forEach(s => { let b; try { b = s.querySelector(".ct").getBBox(); } catch (_) { return; }
+        if (!b.width) return; x1 = Math.min(x1, b.x); y1 = Math.min(y1, b.y); x2 = Math.max(x2, b.x + b.width); });
+      if (x2 < x1) return;
+      x1 -= 8; x2 += 8; y1 = Math.min(y1 - 17, 52);      // marge haute : place du libellé
+      if (x2 - x1 < 62) { const m = (62 - (x2 - x1)) / 2; x1 -= m; x2 += m; }
+      g.forEach(s => { s.setAttribute("viewBox", `${f(x1)} ${f(y1)} ${f(x2 - x1)} ${f(111 - y1)}`);
+        s.querySelector(".gr").setAttribute("d", `M${f(x1 + 3)} 106.5H${f(x2 - 3)}`); });
+      dims.push([x2 - x1, 111 - y1]);
+    });
+    // côte à côte ou l'une sous l'autre : on garde la disposition qui donne le plus grand dessin
+    const W = box.clientWidth, H = box.clientHeight, gap = 14;
+    const scale = (w, h) => Math.min(...dims.map(d => Math.min(w / d[0], h / d[1])));
+    box.classList.toggle("col", svgs.length > 1 && dims.length > 0 && W > 0 && H > 0 && scale(W, (H - gap) / 2) > scale((W - gap - 20) / 2, H));
+  }
+  return { render, keys: Object.keys(S), S };
+})();
+
+/* =====================================================================
+   LE PROGRAMME — seule partie à modifier.
+   EXERCICES : la fiche de chaque exercice (nom, zone travaillée, matériel, consignes, schéma).
+   PROGRAMME : les séances. Chaque ligne reprend une fiche et fixe
+     series | reps (nombre) ou duree (secondes) | repos (secondes, 0 = pas de minuteur)
+   Options d'une fiche :
+     cote: true        -> les répétitions se font de chaque côté
+     deuxCotes: true   -> exercice chronométré à tenir d'un côté puis de l'autre
+     pret: 5           -> secondes pour se mettre en position avant le chrono
+     bouteille: 1      -> taille de bouteille proposée (litres) ; uneSeule: true = une bouteille à deux mains
+   ===================================================================== */
+const EXERCICES = {
+  veloChauffe: { nom: "Échauffement au vélo", zone: "Mise en route", mat: ["velo"], schema: "velo", duree: 300, pendant: "Pédale tranquillement",
+    comment: ["Pédale tranquillement, sans forcer.", "Tu dois pouvoir parler normalement.", "Épaules relâchées, dos long."] },
+  veloVite: { nom: "Pédalage soutenu", zone: "Cardio", mat: ["velo"], schema: "velo", duree: 60, pendant: "Pédale plus fort", reposTxt: "Pédale doucement",
+    comment: ["Accélère ou ajoute un cran de résistance pendant 1 minute.", "Tu dois être essoufflée, mais encore capable de dire quelques mots.", "Puis 2 minutes tranquilles. Le minuteur enchaîne tout seul."] },
+  veloCalme: { nom: "Retour au calme", zone: "Récupération", mat: ["velo"], schema: "velo", duree: 240, pendant: "Pédale de plus en plus lentement",
+    comment: ["Pédale de plus en plus lentement.", "Laisse le souffle redevenir normal."] },
+
+  triceps: { nom: "Bras tendus au-dessus de la tête", zone: "Arrière des bras", mat: ["bouteilles"], schema: "triceps", bouteille: 1, uneSeule: true,
+    comment: ["Tiens la bouteille à deux mains, coudes pliés, derrière la tête.", "Tends les bras vers le plafond, puis redescends lentement.", "Les coudes restent près des oreilles."] },
+  kickback: { nom: "Bras tendus vers l'arrière", zone: "Arrière des bras", mat: ["bouteilles"], schema: "kickback", bouteille: .5,
+    comment: ["Penche-toi en avant, dos plat, genoux un peu pliés.", "Coudes collés au corps : seul l'avant-bras bouge.", "Tends les bras vers l'arrière, tiens 1 seconde, reviens."] },
+  curl: { nom: "Flexion des bras", zone: "Avant des bras", mat: ["bouteilles"], schema: "curl", bouteille: 1,
+    comment: ["Debout, une bouteille dans chaque main, paumes vers l'avant.", "Monte les bouteilles vers les épaules, coudes collés au corps.", "Redescends lentement, sans balancer le dos."] },
+  rowing: { nom: "Tirage à l'élastique", zone: "Dos et bras", mat: ["elastique", "tapis"], schema: "rowing",
+    comment: ["Assise, jambes devant toi, l'élastique passé sous les pieds.", "Tire les coudes vers l'arrière en serrant les omoplates.", "Dos droit. Reviens lentement."] },
+  laterales: { nom: "Bras en croix", zone: "Épaules", mat: ["bouteilles"], schema: "laterales", bouteille: .5,
+    comment: ["Debout, une bouteille dans chaque main, bras le long du corps.", "Lève les bras sur les côtés jusqu'à la hauteur des épaules.", "Pas plus haut. Redescends lentement."] },
+  pompes: { nom: "Pompes contre le mur", zone: "Bras et poitrine", mat: ["mur"], schema: "pompes",
+    comment: ["Mains sur le mur à hauteur d'épaules, pieds reculés d'un grand pas.", "Plie les coudes pour approcher le nez du mur, puis repousse.", "Le corps reste droit, ventre serré."] },
+
+  squatBalle: { nom: "Squat avec la grande balle", zone: "Cuisses et fessiers", mat: ["grandeBalle", "mur"], schema: "squatBalle",
+    comment: ["La balle entre le bas du dos et le mur, pieds avancés d'un pas.", "Descends comme pour t'asseoir : la balle roule dans ton dos.", "Les genoux restent au-dessus des pieds. Remonte en poussant dans les talons."] },
+  squatChaise: { nom: "Assis-debout avec la chaise", zone: "Cuisses et fessiers", mat: ["bouteilles", "chaise"], schema: "squatChaise", bouteille: 1,
+    comment: ["Debout devant une chaise, une bouteille dans chaque main.", "Descends les fesses vers l'arrière jusqu'à effleurer la chaise.", "Remonte en poussant dans les talons."] },
+  pont: { nom: "Pont, balle entre les genoux", zone: "Fessiers et intérieur des cuisses", mat: ["petiteBalle", "tapis"], schema: "pont",
+    comment: ["Sur le dos, pieds à plat, la petite balle serrée entre les genoux.", "Monte le bassin pour aligner épaules, hanches et genoux.", "Serre les fessiers 2 secondes en haut, redescends lentement."] },
+  pasLateraux: { nom: "Pas de côté avec l'élastique", zone: "Extérieur des cuisses", mat: ["elastique"], schema: "pasLateraux", cote: true,
+    comment: ["L'élastique noué autour des cuisses, juste au-dessus des genoux.", "Genoux un peu pliés, fais un pas de côté, puis ramène l'autre pied.", "L'élastique reste tendu tout le temps."] },
+  jambeCote: { nom: "Lever de jambe sur le côté", zone: "Extérieur des cuisses", mat: ["tapis"], schema: "jambeCote", cote: true,
+    comment: ["Allongée sur le côté, la tête posée sur le bras.", "Lève la jambe du dessus sans basculer le bassin.", "Redescends sans poser la jambe."] },
+  chaise: { nom: "La chaise contre le mur", zone: "Cuisses", mat: ["petiteBalle", "mur"], schema: "chaise", duree: 20, pret: 5,
+    comment: ["Dos collé au mur, descends comme si tu étais assise sur une chaise.", "Serre la petite balle entre les genoux.", "Trop dur ? Descends moins bas."] },
+
+  crunch: { nom: "Relevé de buste avec la balle", zone: "Ventre", mat: ["grandeBalle", "tapis"], schema: "crunch",
+    comment: ["Sur le dos, genoux pliés, la balle tenue bras tendus au-dessus de la poitrine.", "Décolle les épaules en poussant la balle vers les genoux.", "Le bas du dos reste au sol. Souffle en montant."] },
+  deadBug: { nom: "Bras et jambe opposés", zone: "Ventre profond", mat: ["tapis"], schema: "deadBug", cote: true,
+    comment: ["Sur le dos, bras vers le plafond, genoux pliés au-dessus des hanches.", "Tends un bras derrière la tête et la jambe opposée, sans les poser.", "Le bas du dos reste plaqué au sol. Reviens, puis change de côté."] },
+  genoux: { nom: "Genoux vers la poitrine", zone: "Bas du ventre", mat: ["petiteBalle", "tapis"], schema: "genoux",
+    comment: ["Sur le dos, la petite balle serrée entre les genoux, bras le long du corps.", "Ramène les genoux vers la poitrine en décollant un peu les fesses.", "Reviens lentement, sans cambrer le dos."] },
+  rotation: { nom: "Rotation avec la balle", zone: "Taille", mat: ["grandeBalle", "tapis"], schema: "rotation", cote: true,
+    comment: ["Assise, genoux pliés, pieds au sol, le dos un peu incliné vers l'arrière.", "Amène la balle à côté de la hanche, d'un côté puis de l'autre.", "Ce sont les épaules qui tournent, pas seulement les bras."] },
+  planche: { nom: "Planche sur les genoux", zone: "Ventre et dos", mat: ["tapis"], schema: "planche", duree: 20, pret: 5,
+    comment: ["Avant-bras au sol, coudes sous les épaules, genoux posés.", "Épaules, hanches et genoux sur une même ligne.", "Rentre le ventre et respire normalement."] },
+  plancheCote: { nom: "Planche sur le côté", zone: "Taille", mat: ["tapis"], schema: "plancheCote", duree: 15, pret: 5, deuxCotes: true,
+    comment: ["Sur le côté, en appui sur l'avant-bras et les genoux.", "Monte les hanches pour aligner épaule, hanche et genou.", "Le bassin ne retombe pas."] },
+
+  etirements: { nom: "Étirements", zone: "Pour finir", mat: ["tapis"], duree: 120, pendant: "Étire-toi sans à-coups",
+    comment: ["Garde chaque position 30 secondes, puis change de côté.", "Ça tire, mais ça ne doit pas faire mal.", "Respire lentement."] },
+};
+
+const PROGRAMME = [
+  { id: "bras", nom: "Bras fermes", focus: "Arrière des bras, épaules, dos", exercices: [
+    { ex: "veloChauffe", series: 1, repos: 0 },
+    { ex: "triceps", series: 3, reps: 12, repos: 40 },
+    { ex: "kickback", series: 3, reps: 12, repos: 40 },
+    { ex: "curl", series: 3, reps: 12, repos: 40 },
+    { ex: "rowing", series: 3, reps: 12, repos: 40 },
+    { ex: "laterales", series: 2, reps: 12, repos: 40 },
+    { ex: "pompes", series: 3, reps: 10, repos: 40 },
+    { ex: "etirements", series: 1, repos: 0, schema: ["eTriceps", "eEnfant"] },
+  ]},
+  { id: "cuisses", nom: "Cuisses toniques", focus: "Cuisses, fessiers, hanches", exercices: [
+    { ex: "veloChauffe", series: 1, repos: 0 },
+    { ex: "squatBalle", series: 3, reps: 12, repos: 45 },
+    { ex: "pont", series: 3, reps: 15, repos: 40 },
+    { ex: "pasLateraux", series: 3, reps: 10, repos: 40 },
+    { ex: "jambeCote", series: 3, reps: 12, repos: 30 },
+    { ex: "chaise", series: 3, repos: 40 },
+    { ex: "etirements", series: 1, repos: 0, schema: ["ePince", "eQuad"] },
+  ]},
+  { id: "ventre", nom: "Ventre et taille", focus: "Abdominaux, taille, dos", exercices: [
+    { ex: "veloChauffe", series: 1, repos: 0 },
+    { ex: "crunch", series: 3, reps: 12, repos: 30 },
+    { ex: "deadBug", series: 3, reps: 8, repos: 30 },
+    { ex: "genoux", series: 3, reps: 10, repos: 30 },
+    { ex: "rotation", series: 3, reps: 10, repos: 30 },
+    { ex: "planche", series: 3, repos: 30 },
+    { ex: "plancheCote", series: 2, repos: 30 },
+    { ex: "etirements", series: 1, repos: 0, schema: ["eCobra", "eEnfant"] },
+  ]},
+  { id: "velo", nom: "Vélo brûle-graisse", focus: "Cardio par intervalles, pour le ventre", exercices: [
+    { ex: "veloChauffe", series: 1, repos: 0 },
+    { ex: "veloVite", series: 6, repos: 120 },
+    { ex: "veloCalme", series: 1, repos: 0 },
+    { ex: "etirements", series: 1, repos: 0, schema: ["ePince", "eQuad"] },
+  ]},
+  { id: "complet", nom: "Corps complet", focus: "Un peu de tout, en une séance", exercices: [
+    { ex: "veloChauffe", series: 1, repos: 0 },
+    { ex: "squatChaise", series: 3, reps: 12, repos: 40 },
+    { ex: "triceps", series: 3, reps: 12, repos: 40 },
+    { ex: "pont", series: 3, reps: 15, repos: 40 },
+    { ex: "rowing", series: 3, reps: 12, repos: 40 },
+    { ex: "deadBug", series: 2, reps: 8, repos: 30 },
+    { ex: "planche", series: 3, repos: 30 },
+    { ex: "etirements", series: 1, repos: 0, schema: ["eTriceps", "ePince"] },
+  ]},
+];
+
+const ROTATION = ["bras", "velo", "cuisses", "ventre", "complet"];   // ordre proposé d'un jour à l'autre
+const BOUTEILLES = [.5, 1, 1.5, 2];                                   // litres (1 L d'eau ≈ 1 kg)
+const MATERIEL = {
+  velo: ["Vélo", "prop"], tapis: ["Tapis", "mat"], bouteilles: ["Bouteilles d'eau", "bottle"], petiteBalle: ["Petite balle", "ball"], grandeBalle: ["Grande balle", "ball"],
+  elastique: ["Élastique", "band"], chaise: ["Chaise", "prop"], mur: ["Mur", "prop"],
+};                                                                    // l'ordre ici = l'ordre d'affichage des étiquettes
+
+/* ===================================================================== */
+const $ = id => document.getElementById(id);
+const exo = e => ({ ...EXERCICES[e.ex], ...e });
+const exos = () => PROGRAMME[S.sess].exercices.map(exo);
+let S = { sess: 0, ex: 0, set: 0, start: 0 };
+
+function show(id) { document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id); }
+
+/* --- Mémoire de l'appareil (bouteilles choisies, dates des séances) : l'appli marche aussi sans --- */
+const KEY = "gym-maman.v1";
+let DB = {};
+try { DB = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (_) {}
+DB.bt = DB.bt || {}; DB.fait = DB.fait || {};
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (_) {} };
+
+/* --- Textes --- */
+const litres = v => String(v).replace(".", ",") + " L";
+const chips = (mat, skip = []) => Object.keys(MATERIEL).filter(m => mat.includes(m) && !skip.includes(m)).map(m => `<li><i class="d-${MATERIEL[m][1]}"></i>${MATERIEL[m][0]}</li>`).join("");
+const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function ago(key) {
+  if (!key) return "Pas encore faite";
+  const [y, m, d] = key.split("-").map(Number), t = new Date(); t.setHours(0, 0, 0, 0);
+  const n = Math.round((t - new Date(y, m - 1, d)) / 864e5);
+  return n <= 0 ? "Faite aujourd'hui" : n === 1 ? "Faite hier" : `Faite il y a ${n} jours`;
+}
+function duree(e) {                                    // "20 secondes", "5 minutes"
+  return e.duree >= 90 ? [e.duree / 60, "minutes"] : [e.duree, "secondes"];
+}
+function repsHtml(e) {
+  if (e.duree) { const [n, u] = duree(e); return `${String(n).replace(".", ",")} <small>${u}${e.deuxCotes ? " de chaque côté" : ""}</small>`; }
+  return `${e.reps} <small>${e.cote ? "de chaque côté" : "répétitions"}</small>`;
+}
+
+/* --- Durée estimée d'une séance --- */
+function setSec(e) {
+  if (e.duree) return (e.duree + (e.pret || 0)) * (e.deuxCotes ? 2 : 1);
+  return e.cote ? 70 : 45;
+}
+const minutes = s => Math.round(s.exercices.map(exo).reduce((a, e) => a + e.series * (setSec(e) + e.repos), 0) / 60);
+
+/* --- Accueil --- */
+function suggestion() {                                // la séance faite il y a le plus longtemps
+  return [...ROTATION].sort((a, b) => (DB.fait[a] || "").localeCompare(DB.fait[b] || "") || ROTATION.indexOf(a) - ROTATION.indexOf(b))[0];
+}
+function renderHome() {
+  $("today").textContent = new Date().toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" });
+  const pick = suggestion();
+  $("sessions").innerHTML = PROGRAMME.map((s, i) => {
+    const mat = [...new Set(s.exercices.flatMap(e => EXERCICES[e.ex].mat))];
+    return `<li><button class="sess${s.id === pick ? " pick" : ""}" data-i="${i}">
+      <span><span class="s-title"><span class="s-name">${s.nom}</span>${s.id === pick ? `<span class="tag">Proposée aujourd'hui</span>` : ""}</span><span class="s-focus">${s.focus}</span></span>
+      <ul class="chips">${chips(mat, ["mur"])}</ul>
+      <span class="s-side"><span class="s-dur">${minutes(s)} min</span><span class="s-last">${ago(DB.fait[s.id])}</span></span>
+    </button></li>`;
+  }).join("");
+}
+$("sessions").onclick = ev => {
+  const b = ev.target.closest(".sess"); if (!b) return;
+  S = { sess: +b.dataset.i, ex: 0, set: 0, start: Date.now() };
+  wake(); openWork();
+};
+
+/* --- Séance --- */
+function openWork() { show("work"); renderWork(); }       // l'écran doit être visible pour cadrer le schéma
+function renderWork() {
+  const s = PROGRAMME[S.sess], list = exos(), e = list[S.ex];
+  $("wSess").textContent = s.nom;
+  $("wIdx").textContent = `Exercice ${S.ex + 1} sur ${list.length}`;
+  $("prog").innerHTML = list.map((_, i) => `<i class="${i < S.ex ? "done" : i === S.ex ? "cur" : ""}"></i>`).join("");
+  $("wZone").textContent = e.zone;
+  $("wName").textContent = e.nom;
+  $("wMat").innerHTML = chips(e.mat);
+  $("wSet").textContent = e.series > 1 ? `Série ${S.set + 1} sur ${e.series}` : "Une seule fois";
+  $("wDots").innerHTML = e.series > 1 ? Array.from({ length: e.series }, (_, i) => `<i class="${i < S.set ? "done" : i === S.set ? "cur" : ""}"></i>`).join("") : "";
+  $("wReps").innerHTML = repsHtml(e);
+  $("wHow").innerHTML = e.comment.map(c => `<li>${c}</li>`).join("");
+  $("wBottle").hidden = !e.bouteille;
+  if (e.bouteille) {
+    const cur = DB.bt[e.ex] || e.bouteille;
+    $("wSeg").innerHTML = BOUTEILLES.map(v => `<button data-v="${v}" aria-pressed="${v === cur}">${litres(v)}</button>`).join("");
+    $("wBtCap").textContent = e.uneSeule ? "une seule, tenue à deux mains" : "une dans chaque main";
+  }
+  $("wNext").textContent = list[S.ex + 1] ? `Ensuite : ${list[S.ex + 1].nom}` : "C'est le dernier exercice.";
+  $("go").textContent = e.duree ? "Démarrer" : "Série terminée";
+  $("prevEx").disabled = S.ex === 0;
+  $("nextEx").textContent = S.ex === list.length - 1 ? "Terminer" : "Suivant";
+  unsure();
+  FIG.render($("sch"), e.schema);
+}
+$("wSeg").onclick = ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  DB.bt[exos()[S.ex].ex] = +b.dataset.v; save(); renderWork();
+};
+
+/* Exercice chronométré : (mise en position) -> effort -> (autre côté) */
+function runTimed(e) {
+  const ph = [];
+  if (e.pret) ph.push({ sec: e.pret, mode: "prep", title: "Mets-toi en position", sub: e.nom });
+  ph.push({ sec: e.duree, mode: "work", title: e.nom, sub: e.deuxCotes ? "Premier côté" : e.pendant || "Tiens la position" });
+  if (e.deuxCotes) ph.push({ sec: e.pret || 5, mode: "prep", title: "Change de côté", sub: e.nom },
+                           { sec: e.duree, mode: "work", title: e.nom, sub: "Deuxième côté" });
+  (function play(i) { i < ph.length ? startTimer({ ...ph[i], then: () => play(i + 1) }) : afterSet(); })(0);
+}
+function afterSet() {
+  const list = exos(), e = list[S.ex], same = S.set < e.series - 1;
+  if (same) S.set++; else { S.ex++; S.set = 0; }
+  if (S.ex >= list.length) return finish();
+  const nx = list[S.ex];
+  const back = () => same && nx.duree ? runTimed(nx) : openWork();     // les séries chronométrées s'enchaînent seules
+  if (!e.repos) return back();
+  startTimer({ sec: e.repos, mode: "rest", title: e.reposTxt || "Repos", then: back,
+    sub: same ? `Ensuite : série ${S.set + 1} sur ${nx.series}` : `Ensuite : ${nx.nom}` });
+}
+function finish() {
+  DB.fait[PROGRAMME[S.sess].id] = dayKey(new Date()); save();
+  const m = Math.max(1, Math.round((Date.now() - S.start) / 60000));
+  $("doneMsg").textContent = `${m} minute${m > 1 ? "s" : ""} d'effort. Bois un grand verre d'eau.`;
+  show("done");
+}
+$("go").onclick = () => { const e = exos()[S.ex]; e.duree ? runTimed(e) : afterSet(); };
+$("prevEx").onclick = () => { if (S.ex > 0) { S.ex--; S.set = 0; renderWork(); } };
+$("nextEx").onclick = () => { S.ex++; S.set = 0; S.ex >= exos().length ? finish() : renderWork(); };
+$("doneBtn").onclick = () => { renderHome(); show("home"); };
+
+/* Arrêter : un deuxième appui confirme (pas de fenêtre de confirmation) */
+let sureT = 0;
+function unsure() { clearTimeout(sureT); $("quit").classList.remove("sure"); $("quit").textContent = "Arrêter"; }
+$("quit").onclick = () => {
+  if ($("quit").classList.contains("sure")) { unsure(); renderHome(); show("home"); return; }
+  $("quit").classList.add("sure"); $("quit").textContent = "Arrêter la séance ?";
+  sureT = setTimeout(unsure, 4000);
+};
+
+/* --- Minuteur (repos, effort, mise en position) --- */
+const CIRC = 2 * Math.PI * 45;
+$("ringFg").style.strokeDasharray = CIRC;
+let T = null, tickH = 0;
+const fmt = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+function drawTime(left) {
+  $("tTime").innerHTML = [...fmt(left)].map(c => c === ":" ? `<span class="sep">:</span>` : `<span>${c}</span>`).join("");
+  $("ringFg").style.strokeDashoffset = CIRC * (1 - Math.max(0, left) / T.total);
+}
+function startTimer(cfg) {
+  clearInterval(tickH);
+  T = { ...cfg, total: cfg.sec, end: Date.now() + cfg.sec * 1000, paused: false, last: null };
+  $("timer").dataset.mode = cfg.mode;
+  $("tLbl").textContent = cfg.title; $("tSub").textContent = cfg.sub || "";
+  $("tPause").textContent = "Pause";
+  show("timer"); tick();
+  tickH = setInterval(tick, 200);
+}
+function tick() {
+  if (!T || T.paused) return;
+  const left = (T.end - Date.now()) / 1000, c = Math.ceil(left);
+  drawTime(left);
+  if (left > 0 && c <= 3 && c !== T.last) { T.last = c; beep(660, .12); }
+  if (left <= 0) {
+    clearInterval(tickH);
+    beep(T.mode === "work" ? 520 : 990, .5);          // grave = stop, aigu = c'est parti
+    const t = T; setTimeout(() => { if (T === t) endTimer(); }, 700);
+  }
+}
+function endTimer() { clearInterval(tickH); const f = T && T.then; T = null; if (f) f(); }
+$("tSkip").onclick = endTimer;
+$("tPlus").onclick = () => { if (!T) return; T.total += 15; if (T.paused) T.left += 15; else T.end += 15000; drawTime(T.paused ? T.left : (T.end - Date.now()) / 1000); };
+$("tPause").onclick = () => {
+  if (!T) return;
+  if (T.paused) { T.end = Date.now() + T.left * 1000; T.paused = false; $("tPause").textContent = "Pause"; }
+  else { T.left = Math.max(0, (T.end - Date.now()) / 1000); T.paused = true; $("tPause").textContent = "Reprendre"; }
+};
+$("tBack").onclick = () => { clearInterval(tickH); T = null; openWork(); };
+
+/* --- Son (débloqué au premier toucher) --- */
+let ac = null;
+function beep(freq, dur) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = freq; o.type = "sine";
+    g.gain.setValueAtTime(.4, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + dur);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+  } catch (_) {}
+}
+document.addEventListener("pointerdown", () => {
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); } catch (_) {}
+}, true);
+
+/* --- Horloge + écran allumé pendant la séance (si le navigateur le permet) --- */
+const clock = () => { $("clock").textContent = new Date().toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" }); };
+async function wake() { try { await navigator.wakeLock.request("screen"); } catch (_) {} }
+document.addEventListener("visibilitychange", () => { if (!document.hidden && $("home").hidden) wake(); });
+
+addEventListener("resize", () => { if (!$("work").hidden) FIG.render($("sch"), exos()[S.ex].schema); });   // rotation de l'écran
+
+renderHome(); clock(); setInterval(clock, 10000);
+</script>
+</body>
+</html>
